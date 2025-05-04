@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Queues;
+using Google.Protobuf;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,21 +34,15 @@ namespace TimerTriggers.Services
 
         public async Task<string> ReceiveMessageWithCountAsync(int count)
         {
-            for (int i = 0; i < count; i++)
+
+            var messageResponse = await _queueClient.ReceiveMessagesAsync(count);
+            if (messageResponse.Value != null)
             {
-                var messageResponse = await _queueClient.ReceiveMessageAsync();
-                if (messageResponse.Value != null)
-                {
-
-                    string message = messageResponse.Value.Body.ToString();
-
-                    await _queueClient.DeleteMessageAsync(messageResponse.Value.MessageId, messageResponse.Value.PopReceipt);
-
-                    return message;
-
+                foreach (var message in messageResponse.Value)
+                {                 
+                    await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt);
                 }
             }
-           
             return "";
         }
 
